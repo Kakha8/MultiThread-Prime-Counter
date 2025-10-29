@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.VBox?>
+
+<AnchorPane prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="kakha.kudava.primecountermultithread.MainPageController">
+
+    <children>
+      <Label fx:id="myLabel" layoutX="153.0" layoutY="78.0" text="Label" />
+        <Label fx:id="statusLabel" layoutX="20.0" layoutY="20.0" style="-fx-font-size: 16px; -fx-font-weight: bold;" text="Prime Counter Status" />
+      <ScrollPane fx:id="mainScrollPane" layoutY="123.0" prefHeight="278.0" prefWidth="600.0">
+         <content>
+            <VBox fx:id="mainVBox" prefHeight="278.0" prefWidth="593.0" />
+         </content>
+      </ScrollPane>
+    </children>
+
+</AnchorPane>

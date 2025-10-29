@@ -1,5 +1,7 @@
 package kakha.kudava.primecountermultithread;
 
+import com.sun.tools.javac.Main;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -7,6 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.BlockingDeque;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.LinkedBlockingDeque;
 
 public class ConsumerThread {
@@ -22,7 +25,7 @@ public class ConsumerThread {
     }
 
     static public List<Integer> getNums(String numbers) {
-        String[] splitNums = numbers.split("\\s+"); // split on any whitespace (handles \n, \r, tabs)
+        String[] splitNums = numbers.split("\\s+"); // split on any whitespace
         List<Integer> nums = new ArrayList<>();
 
         for (String num : splitNums) {
@@ -40,17 +43,19 @@ public class ConsumerThread {
         return nums;
     }
 
-    public static void main(String[] args) throws IOException {
-       BlockingQueue<String> queue = new LinkedBlockingDeque<>(1);
+    public static void producerConsumer(){
+        BlockingQueue<String> queue = new LinkedBlockingDeque<>(1);
+        List<Thread> consumers = new CopyOnWriteArrayList<>();
+        List<Integer> primeCounts = new ArrayList<Integer>();
 
         Thread producer = new Thread(() -> {
             try {
-               String content = new String();
+                String content = new String();
 
-                for (int i = 1; i < 3; i++) {
+                for (int i = 1; i < 20; i++) {
                     System.out.println("Producing: " + i);
 
-                    content = Files.readString(Path.of("data-files/" + String.valueOf(i) + ".txt"));
+                    content = Files.readString(Path.of("data-files/file" + String.valueOf(i) + ".txt"));
 
                     queue.put(content); //wait till que is full
                     Thread.sleep(100);
@@ -63,35 +68,53 @@ public class ConsumerThread {
             }
         });
 
-        // Consumer thread
-        Thread consumer = new Thread(() -> {
-            List<Integer> primeNums = new ArrayList<Integer>();
+        for (int i = 1; i < 30; i++) {
+            // Consumer thread
+            Thread consumer = new Thread(() -> {
+                List<Integer> primeNums = new ArrayList<Integer>();
 
-            try {
-                while (true) {
-                    String item = queue.take(); // waits if queue is empty
+                try {
+                    while (true) {
+                        String item = queue.take(); // waits if queue is empty
 
-                    if ("STOP".equals(item)) break;   // stop condition
+                        if ("STOP".equals(item)) break;   // stop condition
 
-                    List<Integer> nums = getNums(item);
-                    for (Integer num : nums) {
-                        if (isPrime(num)) primeNums.add(num);
+                        List<Integer> nums = getNums(item);
+                        for (Integer num : nums) {
+                            if (isPrime(num)) primeNums.add(num);
+                        }
+
+                        System.out.println("Consuming " + primeNums);
+                        System.out.println(primeNums.size() + " of " + nums.size());
+
+                        MainPageController c = MainPage.controller;
+                        if (c != null) {
+                            c.showMax(primeNums.size(), nums.size());  // showMax does Platform.runLater(...)
+                        } else {
+                            System.out.println("Controller not ready yet");
+                        }
+
+
+                        primeNums.clear();
+
+
+                        Thread.sleep(200);
                     }
 
-                    System.out.println("Consuming " + primeNums);
-                    System.out.println(primeNums.size() + " of " + nums.size());
-                    primeNums.clear();
-
-                    Thread.sleep(200);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
                 }
+            });
+            consumer.start();
+            consumers.add(consumer);
 
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
-        });
-
+        }
         producer.start();
-        consumer.start();
+    }
+
+    public static void main(String[] args) throws IOException {
+
+        //consumer.start();
 
 /*        String content = Files.readString(Path.of("data-files/1.txt"));
         String[] lines = content.split("\n");
