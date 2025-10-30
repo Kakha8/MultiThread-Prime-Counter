@@ -1,47 +1,19 @@
 package kakha.kudava.primecountermultithread;
 
-import com.sun.tools.javac.Main;
-
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.BlockingDeque;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.LinkedBlockingDeque;
 
+import static kakha.kudava.primecountermultithread.FileNums.*;
+
 public class ConsumerThread {
 
-    static boolean isPrime(int n) {
-        if (n < 2) return false;
-        if (n == 2 || n == 3) return true;
-        if (n % 2 == 0 || n % 3 == 0) return false;
-        for (int i = 5; (long)i * i <= n; i += 6) {
-            if (n % i == 0 || n % (i + 2) == 0) return false;
-        }
-        return true;
-    }
 
-    static public List<Integer> getNums(String numbers) {
-        String[] splitNums = numbers.split("\\s+"); // split on any whitespace
-        List<Integer> nums = new ArrayList<>();
-
-        for (String num : splitNums) {
-            num = num.trim(); // remove leading/trailing spaces
-            if (num.isEmpty()) continue; // skip blanks
-            if (!num.matches("-?\\d+")) continue; // skip anything not purely digits
-
-            try {
-                nums.add(Integer.parseInt(num));
-            } catch (NumberFormatException e) {
-                // skip numbers too large for int, or malformed ones
-                System.err.println("Skipping invalid number: " + num);
-            }
-        }
-        return nums;
-    }
 
     public static void producerConsumer(){
         BlockingQueue<String> queue = new LinkedBlockingDeque<>(1);
@@ -87,9 +59,15 @@ public class ConsumerThread {
                         System.out.println("Consuming " + primeNums);
                         System.out.println(primeNums.size() + " of " + nums.size());
 
+                        primeCounts.add(primeNums.size());
+
+                        System.out.println("max count: " + String.valueOf(getMaxPrimeCount(primeCounts)));
+                        System.out.println("max prime: " + String.valueOf(getMaxPrimeCount(primeNums)));
+
+
                         MainPageController c = MainPage.controller;
                         if (c != null) {
-                            c.showMax(primeNums.size(), nums.size());  // showMax does Platform.runLater(...)
+                            c.showMax(primeNums.size(), nums.size());
                         } else {
                             System.out.println("Controller not ready yet");
                         }
@@ -112,14 +90,5 @@ public class ConsumerThread {
         producer.start();
     }
 
-    public static void main(String[] args) throws IOException {
 
-        //consumer.start();
-
-/*        String content = Files.readString(Path.of("data-files/1.txt"));
-        String[] lines = content.split("\n");
-        for (String line : lines) {
-            System.out.println(line);
-        }*/
-    }
 }

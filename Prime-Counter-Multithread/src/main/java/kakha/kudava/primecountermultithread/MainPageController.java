@@ -3,6 +3,7 @@ package kakha.kudava.primecountermultithread;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
+import javafx.scene.control.ProgressBar;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
@@ -45,8 +46,13 @@ public class MainPageController {
     public void showMax(int primes, int total) {
         Platform.runLater(() -> {
             Label label = new Label(primes + " of " + total);
+            ProgressBar progressBar = new ProgressBar();
+            double percent = (double) primes / total;
+            progressBar.setProgress(percent);
+
             label.setStyle("-fx-font-size: 14px; -fx-text-fill: blue;");
             mainVBox.getChildren().add(label);
+            mainVBox.getChildren().add(progressBar);
         });
     }
 }

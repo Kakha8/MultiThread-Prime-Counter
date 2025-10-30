@@ -12,7 +12,7 @@
         <Label fx:id="statusLabel" layoutX="20.0" layoutY="20.0" style="-fx-font-size: 16px; -fx-font-weight: bold;" text="Prime Counter Status" />
       <ScrollPane fx:id="mainScrollPane" layoutY="123.0" prefHeight="278.0" prefWidth="600.0">
          <content>
-            <VBox fx:id="mainVBox" prefHeight="278.0" prefWidth="593.0" />
+            <VBox fx:id="mainVBox" />
          </content>
       </ScrollPane>
     </children>

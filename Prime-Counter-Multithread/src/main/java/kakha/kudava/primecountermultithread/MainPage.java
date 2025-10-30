@@ -19,7 +19,7 @@ public class MainPage extends Application {
 
     @Override
     public void start(Stage stage) throws IOException {
-        FXMLLoader fxmlLoader = new FXMLLoader(HelloApplication.class.getResource("main-page.fxml"));
+        FXMLLoader fxmlLoader = new FXMLLoader(MainPage.class.getResource("main-page.fxml"));
         Scene scene = new Scene(fxmlLoader.load(), 600, 400);
 
         controller = fxmlLoader.getController();  // <— the real on-screen controller
