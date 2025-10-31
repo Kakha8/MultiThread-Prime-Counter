@@ -13,7 +13,7 @@ import javafx.scene.layout.VBox;
 public class MainPageController {
 
     @FXML
-    private Label myLabel;
+    private VBox counterBox;
 
     @FXML
     private ScrollPane mainScrollPane;
@@ -53,6 +53,19 @@ public class MainPageController {
             label.setStyle("-fx-font-size: 14px; -fx-text-fill: blue;");
             mainVBox.getChildren().add(label);
             mainVBox.getChildren().add(progressBar);
+        });
+    }
+
+    public void counter(int maxPrime, int maxPrimeCount, int thread) {
+        Platform.runLater(() -> {
+            Label maxPrimeLabel = new Label("Max prime: " + maxPrime);
+            Label threadLabel = new Label("Thread: " + thread);
+            Label maxPrimeCountLabel = new Label("Max count: " + maxPrimeCount);
+
+            counterBox.getChildren().clear();
+            counterBox.getChildren().add(maxPrimeCountLabel);
+            counterBox.getChildren().add(maxPrimeLabel);
+            counterBox.getChildren().add(threadLabel);
         });
     }
 }
