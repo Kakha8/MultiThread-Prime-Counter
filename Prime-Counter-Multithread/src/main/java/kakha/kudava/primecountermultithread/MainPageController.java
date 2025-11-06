@@ -2,6 +2,7 @@ package kakha.kudava.primecountermultithread;
 
 import javafx.application.Platform;
 import javafx.fxml.FXML;
+import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.control.ScrollPane;
@@ -21,6 +22,12 @@ public class MainPageController {
     @FXML
     private VBox mainVBox;
 
+    @FXML
+    private Button startBtn;
+
+    @FXML
+    private Button stopBtn;
+
     private Label primeCountLabel;
 
     @FXML
@@ -29,15 +36,7 @@ public class MainPageController {
         primeCountLabel = new Label("Prime count: 0");
         primeCountLabel.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: green;");
 
-/*        // add it to the top of the VBox
-        mainVBox.getChildren().add(primeCountLabel);
-
-        // add a few sample labels just to show layout still works
-        for (int i = 1; i <= 5; i++) {
-            Label label = new Label("Dynamic Label " + i);
-            label.setStyle("-fx-font-size: 14px; -fx-text-fill: blue;");
-            mainVBox.getChildren().add(label);
-        }*/
+        stopBtn.setDisable(true);
 
         System.out.println("initialize() ran, primeCountLabel created.");
     }
@@ -67,5 +66,20 @@ public class MainPageController {
             counterBox.getChildren().add(maxPrimeLabel);
             counterBox.getChildren().add(threadLabel);
         });
+    }
+
+    @FXML
+    private void onStartThreads(){
+        mainVBox.getChildren().clear();
+        startBtn.setDisable(true);
+        stopBtn.setDisable(false);
+        ConsumerThread.producerConsumer();
+    }
+
+    @FXML
+    private void onStopThreads() throws InterruptedException {
+        ConsumerThread.stopThreads();
+        startBtn.setDisable(false);
+        stopBtn.setDisable(true);
     }
 }

@@ -8,13 +8,19 @@ import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.TimeUnit;
 
 import static kakha.kudava.primecountermultithread.FileNums.*;
 
 public class ConsumerThread {
 
 
-    public static BlockingQueue<String> queue = new LinkedBlockingDeque<>(1);
+    private static BlockingQueue<String> queue = new LinkedBlockingDeque<>(1);
+    private static List<Thread> consumers = new CopyOnWriteArrayList<>();
+    private static final String STOP = "STOP";
+    private static boolean stopping = false;
+
+    private static Thread producer;
 
     public static void producerConsumer(){
 
@@ -22,7 +28,7 @@ public class ConsumerThread {
         List<Integer> primeCounts = new ArrayList<Integer>();
         List<Boolean> threadCount = new ArrayList<Boolean>();
 
-        Thread producer = new Thread(() -> {
+        producer = new Thread(() -> {
             try {
                 String content = new String();
 
@@ -100,5 +106,46 @@ public class ConsumerThread {
         producer.start();
     }
 
+    public static void stopThreads() {
+        stopping = true;
+
+        // Stop the producer
+        if (producer != null && producer.isAlive()) {
+            producer.interrupt();
+        }
+
+        // Clear any pending work
+        queue.clear();
+
+        // Wake every consumer with a poison pill
+        int n = consumers.size();
+        for (int i = 0; i < n; i++) {
+            // offer to avoid blocking if queue gets momentarily full
+            boolean offered = false;
+            for (int tries = 0; tries < 3 && !offered; tries++) {
+                try {
+                    offered = queue.offer(STOP, 100, TimeUnit.MILLISECONDS);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    break;
+                }
+            }
+        }
+
+        // interrupt consumers in case any are sleeping
+        for (Thread t : consumers) {
+            if (t.isAlive()) t.interrupt();
+        }
+
+        // wait a bit for clean exit
+        for (Thread t : consumers) {
+            try {
+                t.join(500);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                break;
+            }
+        }
+    }
 
 }

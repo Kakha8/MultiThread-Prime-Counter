@@ -27,7 +27,7 @@ public class MainPage extends Application {
         stage.setScene(scene);
         stage.show();
 
-        ConsumerThread.producerConsumer();
+        //ConsumerThread.producerConsumer();
 
     }
 
