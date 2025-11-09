@@ -2,10 +2,8 @@ package kakha.kudava.primecountermultithread;
 
 import javafx.application.Platform;
 import javafx.fxml.FXML;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.control.ProgressBar;
-import javafx.scene.control.ScrollPane;
+import javafx.scene.control.*;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
 
@@ -28,6 +26,21 @@ public class MainPageController {
     @FXML
     private Button stopBtn;
 
+    @FXML
+    private TextField countTextField;
+
+    @FXML
+    private Button plusBtn;
+
+    @FXML
+    private Button minusBtn;
+
+    @FXML
+    private Label currentThreadLabel;
+
+    @FXML
+    private HBox threadHbox;
+
     private Label primeCountLabel;
 
     @FXML
@@ -37,8 +50,30 @@ public class MainPageController {
         primeCountLabel.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: green;");
 
         stopBtn.setDisable(true);
+        countTextField.setText("100");
 
         System.out.println("initialize() ran, primeCountLabel created.");
+    }
+
+    @FXML
+    public void setCurrentThreadLabel(int currentThread) {
+        Platform.runLater(() -> {
+            currentThreadLabel.setText(String.valueOf(currentThread));
+        });
+    }
+
+    @FXML
+    public int getCurrentThread() {
+        return Integer.parseInt(currentThreadLabel.getText());
+    }
+
+    @FXML
+    public void enableStartBtn() {
+        startBtn.setDisable(false);
+    }
+    @FXML
+    public void disableStopBtn() {
+        stopBtn.setDisable(true);
     }
 
     // Called by other threads
@@ -73,7 +108,9 @@ public class MainPageController {
         mainVBox.getChildren().clear();
         startBtn.setDisable(true);
         stopBtn.setDisable(false);
-        ConsumerThread.producerConsumer();
+
+        int threadCount = Integer.parseInt(countTextField.getText());
+        ConsumerThread.producerConsumer(threadCount);
     }
 
     @FXML
@@ -81,5 +118,31 @@ public class MainPageController {
         ConsumerThread.stopThreads();
         startBtn.setDisable(false);
         stopBtn.setDisable(true);
+    }
+
+    @FXML
+    private void onPlus(){
+        int threadCount = Integer.parseInt(countTextField.getText());
+        threadCount += 1;
+        countTextField.setText(String.valueOf(threadCount));
+    }
+
+    @FXML
+    private void onMinus(){
+        int threadCount = Integer.parseInt(countTextField.getText());
+        threadCount -= 1;
+        countTextField.setText(String.valueOf(threadCount));
+    }
+
+    @FXML
+    private void onAdjust(){
+        int threadAdjust = Integer.parseInt(countTextField.getText());
+        int currentThread = Integer.parseInt(currentThreadLabel.getText());
+        int selectedThreadAdjust = Integer.parseInt(countTextField.getText());
+
+        Platform.runLater(() -> {
+            ConsumerThread.adjustThreads(selectedThreadAdjust);
+        });
+
     }
 }

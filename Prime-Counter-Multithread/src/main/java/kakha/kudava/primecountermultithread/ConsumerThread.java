@@ -17,22 +17,23 @@ public class ConsumerThread {
 
     private static BlockingQueue<String> queue = new LinkedBlockingDeque<>(1);
     private static List<Thread> consumers = new CopyOnWriteArrayList<>();
+    private static List<Integer> primeCounts = new ArrayList<Integer>();
+    private static List<Boolean> threadCount = new ArrayList<Boolean>();
     private static final String STOP = "STOP";
     private static boolean stopping = false;
 
     private static Thread producer;
 
-    public static void producerConsumer(){
+    public static void producerConsumer(int threadCountNum){
 
-        List<Thread> consumers = new CopyOnWriteArrayList<>();
-        List<Integer> primeCounts = new ArrayList<Integer>();
-        List<Boolean> threadCount = new ArrayList<Boolean>();
+        //List<Thread> consumers = new CopyOnWriteArrayList<>();
+
 
         producer = new Thread(() -> {
             try {
                 String content = new String();
 
-                for (int i = 1; i < 1000; i++) {
+                for (int i = 1; i < threadCountNum + 1; i++) {
                     System.out.println("Producing: " + i);
 
                     content = Files.readString(Path.of("data-files/file" + String.valueOf(i) + ".txt"));
@@ -48,7 +49,7 @@ public class ConsumerThread {
             }
         });
 
-        for (int i = 1; i <= 1000; i++) {
+        for (int i = 1; i <= threadCountNum + 1; i++) {
             // Consumer thread
             Thread consumer = new Thread(() -> {
                 List<Integer> primeNums = new ArrayList<Integer>();
@@ -84,6 +85,7 @@ public class ConsumerThread {
                         if (c != null) {
                             c.showMax(primeNums.size(), nums.size());
                             c.counter(maxPrime, maxCount, threadCount.size());
+                            c.setCurrentThreadLabel(threadCount.size());
                         } else {
                             System.out.println("Controller not ready yet");
                         }
@@ -125,12 +127,18 @@ public class ConsumerThread {
             for (int tries = 0; tries < 3 && !offered; tries++) {
                 try {
                     offered = queue.offer(STOP, 100, TimeUnit.MILLISECONDS);
+
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
                     break;
                 }
             }
         }
+
+        //clear threads
+        consumers.clear();
+        producer.interrupt();
+        queue.clear();
 
         // interrupt consumers in case any are sleeping
         for (Thread t : consumers) {
@@ -146,6 +154,32 @@ public class ConsumerThread {
                 break;
             }
         }
+    }
+
+    public static void adjustThreads(int threadCount) {
+        MainPageController c = MainPage.controller;
+        if (c == null) return;
+
+        new Thread(() -> {
+            while (true) {
+                int currentThread = c.getCurrentThread();
+
+                if (currentThread >= threadCount) {
+                    System.out.println("Max thread reached, stopping threads...");
+                    stopThreads();
+                    c.disableStopBtn();
+                    c.enableStartBtn();
+
+                    break;
+                }
+
+                try {
+                    Thread.sleep(100);
+                } catch (InterruptedException e) {
+                    break;
+                }
+            }
+        }, "AdjustThreadWatcher").start();
     }
 
 }

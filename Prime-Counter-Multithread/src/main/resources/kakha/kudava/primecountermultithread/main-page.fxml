@@ -10,19 +10,21 @@
 <AnchorPane prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="kakha.kudava.primecountermultithread.MainPageController">
 
     <children>
-      <ScrollPane fx:id="mainScrollPane" layoutY="123.0" prefHeight="278.0" prefWidth="600.0">
+      <ScrollPane fx:id="mainScrollPane" layoutY="114.0" prefHeight="287.0" prefWidth="600.0">
          <content>
             <VBox fx:id="mainVBox" />
          </content>
       </ScrollPane>
       <VBox fx:id="counterBox" layoutX="418.0" prefHeight="125.0" prefWidth="167.0" />
-      <TextField layoutX="82.0" layoutY="27.0" prefHeight="25.0" prefWidth="50.0" />
-      <Button layoutX="50.0" layoutY="27.0" mnemonicParsing="false" text="+" />
-      <Button layoutX="139.0" layoutY="27.0" mnemonicParsing="false" prefHeight="25.0" prefWidth="25.0" text="-" />
-      <Button layoutX="78.0" layoutY="63.0" mnemonicParsing="false" prefHeight="25.0" prefWidth="58.0" text="ADJUST" />
-      <Button fx:id="startBtn" layoutX="190.0" layoutY="27.0" mnemonicParsing="false" onAction="#onStartThreads" text="START" />
-      <Button fx:id="stopBtn" layoutX="190.0" layoutY="63.0" mnemonicParsing="false" onAction="#onStopThreads" prefHeight="25.0" prefWidth="50.0" text="STOP" />
+      <TextField fx:id="countTextField" layoutX="82.0" layoutY="14.0" prefHeight="25.0" prefWidth="50.0" />
+      <Button fx:id="plusBtn" layoutX="50.0" layoutY="14.0" mnemonicParsing="false" onAction="#onPlus" text="+" />
+      <Button fx:id="minusBtn" layoutX="139.0" layoutY="14.0" mnemonicParsing="false" onAction="#onMinus" prefHeight="25.0" prefWidth="25.0" text="-" />
+      <Button layoutX="78.0" layoutY="50.0" mnemonicParsing="false" onAction="#onAdjust" prefHeight="25.0" prefWidth="58.0" text="ADJUST" />
+      <Button fx:id="startBtn" layoutX="190.0" layoutY="14.0" mnemonicParsing="false" onAction="#onStartThreads" text="START" />
+      <Button fx:id="stopBtn" layoutX="189.0" layoutY="82.0" mnemonicParsing="false" onAction="#onStopThreads" prefHeight="25.0" prefWidth="51.0" text="STOP" />
       <Label fx:id="threadLabel" layoutX="272.0" layoutY="31.0" prefHeight="17.0" prefWidth="105.0" />
+      <Label fx:id="currentThreadLabel" layoutX="68.0" layoutY="86.0" text="Label" />
+      <Button layoutX="189.0" layoutY="50.0" mnemonicParsing="false" text="PAUSE" />
     </children>
 
 </AnchorPane>
