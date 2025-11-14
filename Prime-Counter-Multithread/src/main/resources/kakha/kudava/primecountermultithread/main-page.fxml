@@ -20,11 +20,15 @@
       <Button fx:id="plusBtn" layoutX="50.0" layoutY="14.0" mnemonicParsing="false" onAction="#onPlus" text="+" />
       <Button fx:id="minusBtn" layoutX="139.0" layoutY="14.0" mnemonicParsing="false" onAction="#onMinus" prefHeight="25.0" prefWidth="25.0" text="-" />
       <Button layoutX="78.0" layoutY="50.0" mnemonicParsing="false" onAction="#onAdjust" prefHeight="25.0" prefWidth="58.0" text="ADJUST" />
-      <Button fx:id="startBtn" layoutX="190.0" layoutY="14.0" mnemonicParsing="false" onAction="#onStartThreads" text="START" />
-      <Button fx:id="stopBtn" layoutX="189.0" layoutY="82.0" mnemonicParsing="false" onAction="#onStopThreads" prefHeight="25.0" prefWidth="51.0" text="STOP" />
       <Label fx:id="threadLabel" layoutX="272.0" layoutY="31.0" prefHeight="17.0" prefWidth="105.0" />
       <Label fx:id="currentThreadLabel" layoutX="68.0" layoutY="86.0" text="Label" />
-      <Button layoutX="189.0" layoutY="50.0" mnemonicParsing="false" text="PAUSE" />
+      <VBox layoutX="178.0" layoutY="14.0" prefHeight="98.0" prefWidth="86.0">
+         <children>
+            <Button fx:id="startBtn" mnemonicParsing="false" onAction="#onStartThreads" prefHeight="25.0" prefWidth="70.0" text="START" />
+            <Button fx:id="pauseBtn" mnemonicParsing="false" onAction="#onPause" prefHeight="25.0" prefWidth="70.0" text="PAUSE" />
+            <Button fx:id="stopBtn" mnemonicParsing="false" onAction="#onStopThreads" prefHeight="25.0" prefWidth="70.0" text="STOP" />
+         </children>
+      </VBox>
     </children>
 
 </AnchorPane>

@@ -20,15 +20,43 @@ public class ConsumerThread {
     private static List<Integer> primeCounts = new ArrayList<Integer>();
     private static List<Boolean> threadCount = new ArrayList<Boolean>();
     private static final String STOP = "STOP";
+
+    private static final Object PAUSE_LOCK = new Object();
+    private static volatile boolean paused = false;
     private static boolean stopping = false;
 
     private static Thread producer;
+
+    public static void pauseThreads() {
+        synchronized (PAUSE_LOCK) {
+            paused = true;
+        }
+    }
+
+    public static void resumeThreads() {
+        synchronized (PAUSE_LOCK) {
+            paused = false;
+            PAUSE_LOCK.notifyAll();
+        }
+    }
+
+    public static boolean isPaused() {
+        return paused;
+    }
+
+    private static void waitIfPaused() throws InterruptedException {
+        synchronized (PAUSE_LOCK) {
+            while (paused && !stopping) {
+                PAUSE_LOCK.wait();
+            }
+        }
+    }
 
     public static void producerConsumer(int threadCountNum){
 
         //List<Thread> consumers = new CopyOnWriteArrayList<>();
 
-
+        stopping = false;
         producer = new Thread(() -> {
             try {
                 String content = new String();
@@ -38,7 +66,11 @@ public class ConsumerThread {
 
                     content = Files.readString(Path.of("data-files/file" + String.valueOf(i) + ".txt"));
 
-                    queue.put(content); //wait till que is full
+                    // respecting pause between attempts
+                    while (true) {
+                        waitIfPaused();
+                        if (queue.offer(content, 200, TimeUnit.MILLISECONDS)) break;
+                    }
                     Thread.sleep(100);
                 }
 
@@ -55,8 +87,19 @@ public class ConsumerThread {
                 List<Integer> primeNums = new ArrayList<Integer>();
 
                 try {
-                    while (true) {
-                        String item = queue.take(); // waits if queue is empty
+                    while (!stopping) {
+
+                        if (isPaused()) {
+                            System.out.println(Thread.currentThread().getName() + " waiting (paused)...");
+                        }
+                        waitIfPaused();
+
+                        // Use poll() instead of take() so we can re-check pause flag
+                        String item = queue.poll(200, TimeUnit.MILLISECONDS);
+                        if (item == null) {
+                            // nothing available right now; loop to check pause again
+                            continue;
+                        }
 
                         if ("STOP".equals(item)) break;   // stop condition
 
@@ -127,6 +170,7 @@ public class ConsumerThread {
             for (int tries = 0; tries < 3 && !offered; tries++) {
                 try {
                     offered = queue.offer(STOP, 100, TimeUnit.MILLISECONDS);
+                    threadCount.clear();
 
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();

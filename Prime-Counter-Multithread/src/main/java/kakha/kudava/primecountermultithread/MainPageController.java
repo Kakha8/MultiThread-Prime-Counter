@@ -30,16 +30,13 @@ public class MainPageController {
     private TextField countTextField;
 
     @FXML
-    private Button plusBtn;
-
-    @FXML
-    private Button minusBtn;
-
-    @FXML
     private Label currentThreadLabel;
 
     @FXML
-    private HBox threadHbox;
+    private Button pauseBtn;
+
+    @FXML
+    private Button resumeBtn;
 
     private Label primeCountLabel;
 
@@ -51,6 +48,7 @@ public class MainPageController {
 
         stopBtn.setDisable(true);
         countTextField.setText("100");
+        pauseBtn.setVisible(false);
 
         System.out.println("initialize() ran, primeCountLabel created.");
     }
@@ -108,6 +106,7 @@ public class MainPageController {
         mainVBox.getChildren().clear();
         startBtn.setDisable(true);
         stopBtn.setDisable(false);
+        pauseBtn.setVisible(true);
 
         int threadCount = Integer.parseInt(countTextField.getText());
         ConsumerThread.producerConsumer(threadCount);
@@ -118,6 +117,7 @@ public class MainPageController {
         ConsumerThread.stopThreads();
         startBtn.setDisable(false);
         stopBtn.setDisable(true);
+        pauseBtn.setVisible(false);
     }
 
     @FXML
@@ -145,4 +145,20 @@ public class MainPageController {
         });
 
     }
+
+    @FXML
+    private void onPause(){
+        if (pauseBtn.getText().equals("PAUSE")) {
+            ConsumerThread.pauseThreads();
+            System.out.println("pause() ran");
+            pauseBtn.setText("RESUME");
+        } else if (pauseBtn.getText().equals("RESUME")) {
+            ConsumerThread.resumeThreads();
+            System.out.println("resume() ran");
+            pauseBtn.setText("PAUSE");
+        }
+
+    }
+
+
 }
