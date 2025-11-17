@@ -9,18 +9,21 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static kakha.kudava.primecountermultithread.FileNums.*;
 
 public class ConsumerThread {
 
 
-    private static BlockingQueue<String> queue = new LinkedBlockingDeque<>(1);
-    private static List<Thread> consumers = new CopyOnWriteArrayList<>();
+    public static BlockingQueue<String> queue = new LinkedBlockingDeque<>(1000);
+    public static List<Thread> consumers = new CopyOnWriteArrayList<>();
     private static List<Integer> primeCounts = new ArrayList<Integer>();
     private static List<Boolean> threadCount = new ArrayList<Boolean>();
-    private static final String STOP = "STOP";
+    private static AtomicInteger threadId = new AtomicInteger(1);
+    public static final String STOP = "STOP";
 
+    public static AtomicInteger maxConsumers = new AtomicInteger(0);
     private static final Object PAUSE_LOCK = new Object();
     private static volatile boolean paused = false;
     private static boolean stopping = false;
@@ -52,16 +55,105 @@ public class ConsumerThread {
         }
     }
 
-    public static void producerConsumer(int threadCountNum){
+    public static void startConsumerThread() {
+
+        int id = threadId.getAndIncrement();
+
+        Thread consumer = new Thread(() -> {
+            Thread.currentThread().setName("Consumer-" + id);
+            List<Integer> primeNums = new ArrayList<>();
+
+            try {
+                // respect pause before doing any work
+                if (isPaused()) {
+                    System.out.println(Thread.currentThread().getName() + " waiting (paused)...");
+                }
+                waitIfPaused();
+                if (stopping) return;   // just in case someone called stop
+
+                // ----- ONE file per thread -----
+                // block until we get one item
+                String item = queue.take();   // no loop, no poll()
+
+                // if you still sometimes put STOP into the queue, just ignore it
+                if (STOP.equals(item)) {
+                    System.out.println(Thread.currentThread().getName() + " got STOP, exiting.");
+                    return;
+                }
+
+                // process THIS file only
+                List<Integer> nums = getNums(item);
+                for (Integer num : nums) {
+                    if (isPrime(num)) primeNums.add(num);
+                }
+
+                System.out.println(Thread.currentThread().getName() + " processed ONE file");
+                System.out.println("Consuming " + primeNums);
+                System.out.println(primeNums.size() + " of " + nums.size());
+
+                synchronized (primeCounts) {
+                    primeCounts.add(primeNums.size());
+                }
+
+                int maxCount = getMaxPrimeCount(primeCounts);
+                int maxPrime = getMaxPrimeCount(primeNums);
+
+                synchronized (threadCount) {
+                    threadCount.add(true);   // now: one entry per thread
+                }
+
+                System.out.println("max count: " + maxCount);
+                System.out.println("max prime: " + maxPrime);
+
+                MainPageController c = MainPage.controller;
+                if (c != null) {
+                    c.showMax(primeNums.size(), nums.size());
+                    c.counter(maxPrime, maxCount, threadCount.size());
+                    c.setCurrentThreadLabel(threadCount.size());
+                } else {
+                    System.out.println("Controller not ready yet");
+                }
+
+                // thread ends here — no while loop, no extra files
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        });
+
+        consumer.start();
+        consumers.add(consumer);
+    }
+
+    public static void addMoreConsumers(int howMany) {
+        // don't spawn anything if we are shutting down
+        if (stopping) {
+            System.out.println("Not adding consumers: stopping == true");
+            return;
+        }
+
+        // update the maxConsumers counter (optional but consistent with your design)
+        maxConsumers.addAndGet(howMany);
+
+        for (int i = 0; i < howMany; i++) {
+            startConsumerThread();
+        }
+
+        System.out.println("Added " + howMany + " more consumers. Total: " + consumers.size());
+    }
+
+
+    public static void producerConsumer(int threadCountNum) throws InterruptedException {
 
         //List<Thread> consumers = new CopyOnWriteArrayList<>();
 
         stopping = false;
+        maxConsumers.set(threadCountNum);
+        //System.out.println(maxConsumers);
         producer = new Thread(() -> {
             try {
                 String content = new String();
 
-                for (int i = 1; i < threadCountNum + 1; i++) {
+                for (int i = 1; i < 1001 + 1; i++) {
                     System.out.println("Producing: " + i);
 
                     content = Files.readString(Path.of("data-files/file" + String.valueOf(i) + ".txt"));
@@ -74,137 +166,81 @@ public class ConsumerThread {
                     Thread.sleep(100);
                 }
 
-                queue.put("STOP");
+                for (int i = 0; i < consumers.size(); i++) {
+                    queue.put(STOP);
+                }
 
             } catch (InterruptedException | IOException e){
                 Thread.currentThread().interrupt();
             }
         });
 
-        for (int i = 1; i <= threadCountNum + 1; i++) {
-            // Consumer thread
-            Thread consumer = new Thread(() -> {
-                List<Integer> primeNums = new ArrayList<Integer>();
-
-                try {
-                    while (!stopping) {
-
-                        if (isPaused()) {
-                            System.out.println(Thread.currentThread().getName() + " waiting (paused)...");
-                        }
-                        waitIfPaused();
-
-                        // Use poll() instead of take() so we can re-check pause flag
-                        String item = queue.poll(200, TimeUnit.MILLISECONDS);
-                        if (item == null) {
-                            // nothing available right now; loop to check pause again
-                            continue;
-                        }
-
-                        if ("STOP".equals(item)) break;   // stop condition
-
-                        List<Integer> nums = getNums(item);
-                        for (Integer num : nums) {
-                            if (isPrime(num)) primeNums.add(num);
-                        }
-
-                        System.out.println("Consuming " + primeNums);
-                        System.out.println(primeNums.size() + " of " + nums.size());
-
-                        primeCounts.add(primeNums.size());
-
-                        int maxCount = getMaxPrimeCount(primeCounts);
-                        int maxPrime = getMaxPrimeCount(primeNums);
-                        int thread = consumers.size();
-
-                        threadCount.add(true);
-
-                        System.out.println("max count: " + String.valueOf(getMaxPrimeCount(primeCounts)));
-                        System.out.println("max prime: " + String.valueOf(getMaxPrimeCount(primeNums)));
-
-
-
-                        MainPageController c = MainPage.controller;
-                        if (c != null) {
-                            c.showMax(primeNums.size(), nums.size());
-                            c.counter(maxPrime, maxCount, threadCount.size());
-                            c.setCurrentThreadLabel(threadCount.size());
-                        } else {
-                            System.out.println("Controller not ready yet");
-                        }
-
-
-                        primeNums.clear();
-
-
-                        Thread.sleep(200);
-                    }
-
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                }
-            });
-            consumer.start();
-            consumers.add(consumer);
-
+        System.out.println("threadcountnum: " + threadCountNum);
+        for (int i = 1; i < threadCountNum + 1; i++){
+            startConsumerThread();
         }
+
+
         producer.start();
     }
-
     public static void stopThreads() {
+        // 1) flip the flag
         stopping = true;
 
-        // Stop the producer
+        // 2) if paused, wake everyone so they can see 'stopping' or consume STOP
+        synchronized (PAUSE_LOCK) {
+            paused = false;
+            PAUSE_LOCK.notifyAll();
+        }
+
+        // 3) stop the producer quickly
         if (producer != null && producer.isAlive()) {
             producer.interrupt();
         }
 
-        // Clear any pending work
-        queue.clear();
-
-        // Wake every consumer with a poison pill
+        // 4) send one STOP per currently alive consumer
         int n = consumers.size();
         for (int i = 0; i < n; i++) {
-            // offer to avoid blocking if queue gets momentarily full
-            boolean offered = false;
-            for (int tries = 0; tries < 3 && !offered; tries++) {
-                try {
-                    offered = queue.offer(STOP, 100, TimeUnit.MILLISECONDS);
-                    threadCount.clear();
-
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                    break;
-                }
-            }
-        }
-
-        //clear threads
-        consumers.clear();
-        producer.interrupt();
-        queue.clear();
-
-        // interrupt consumers in case any are sleeping
-        for (Thread t : consumers) {
-            if (t.isAlive()) t.interrupt();
-        }
-
-        // wait a bit for clean exit
-        for (Thread t : consumers) {
             try {
-                t.join(500);
+                // use put() to guarantee delivery; bounded queue handles backpressure
+                queue.put(STOP);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 break;
             }
         }
+
+        // 5) interrupt consumers in case any are sleeping/blocking
+        for (Thread t : consumers) {
+            if (t.isAlive()) t.interrupt();
+        }
+
+        // 6) join consumers (give them a moment to exit cleanly)
+        for (Thread t : consumers) {
+            try {
+                t.join(1000);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                break;
+            }
+        }
+
+        // 7) now it's safe to clear state
+        queue.clear();
+        consumers.clear();
+        // if you keep shared lists/counters, reset them here too
+        // primeCounts.clear(); threadCount.clear(); etc.
+
+        // 8) producer reference is no longer useful
+        producer = null;
     }
 
-    public static void adjustThreads(int threadCount) {
+
+    public static void adjustThreads(int selectedThreadAdjust) {
         MainPageController c = MainPage.controller;
         if (c == null) return;
 
-        new Thread(() -> {
+ /*       new Thread(() -> {
             while (true) {
                 int currentThread = c.getCurrentThread();
 
@@ -223,6 +259,18 @@ public class ConsumerThread {
                     break;
                 }
             }
+        }, "AdjustThreadWatcher").start();*/
+        new Thread(() -> {
+            while (true) {
+                int currentThread = c.getCurrentThread();
+                int currentThreadMax = maxConsumers.get();
+                if(selectedThreadAdjust > currentThreadMax) {
+                    int diff = selectedThreadAdjust - currentThreadMax;
+                    ThreadAdjust.addThreads(diff);
+                }
+            }
+
+
         }, "AdjustThreadWatcher").start();
     }
 

@@ -102,7 +102,7 @@ public class MainPageController {
     }
 
     @FXML
-    private void onStartThreads(){
+    private void onStartThreads() throws InterruptedException {
         mainVBox.getChildren().clear();
         startBtn.setDisable(true);
         stopBtn.setDisable(false);
@@ -141,7 +141,9 @@ public class MainPageController {
         int selectedThreadAdjust = Integer.parseInt(countTextField.getText());
 
         Platform.runLater(() -> {
-            ConsumerThread.adjustThreads(selectedThreadAdjust);
+            //ConsumerThread.adjustThreads(selectedThreadAdjust);
+            //ConsumerThread.addMoreConsumers(10);
+            ThreadAdjust.addThreads(10);
         });
 
     }
@@ -160,5 +162,9 @@ public class MainPageController {
 
     }
 
-
+    @FXML
+    private void onResume(){
+        ConsumerThread.resumeThreads();
+        System.out.println("resume() ran");
+    }
 }
