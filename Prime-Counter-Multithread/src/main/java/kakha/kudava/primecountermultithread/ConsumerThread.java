@@ -107,7 +107,7 @@ public class ConsumerThread {
 
                 MainPageController c = MainPage.controller;
                 if (c != null) {
-                    c.showMax(primeNums.size(), nums.size());
+                    c.showMax(id, primeNums.size(), nums.size());
                     c.counter(maxPrime, maxCount, threadCount.size());
                     c.setCurrentThreadLabel(threadCount.size());
                 } else {
@@ -240,35 +240,24 @@ public class ConsumerThread {
         MainPageController c = MainPage.controller;
         if (c == null) return;
 
- /*       new Thread(() -> {
-            while (true) {
-                int currentThread = c.getCurrentThread();
-
-                if (currentThread >= threadCount) {
-                    System.out.println("Max thread reached, stopping threads...");
-                    stopThreads();
-                    c.disableStopBtn();
-                    c.enableStartBtn();
-
-                    break;
-                }
-
-                try {
-                    Thread.sleep(100);
-                } catch (InterruptedException e) {
-                    break;
-                }
-            }
-        }, "AdjustThreadWatcher").start();*/
         new Thread(() -> {
-            while (true) {
+
                 int currentThread = c.getCurrentThread();
                 int currentThreadMax = maxConsumers.get();
                 if(selectedThreadAdjust > currentThreadMax) {
                     int diff = selectedThreadAdjust - currentThreadMax;
-                    ThreadAdjust.addThreads(diff);
+                    try {
+                        System.out.println(diff);
+                        ThreadAdjust.addThreads(diff, maxConsumers);
+                    } catch (InterruptedException e) {
+                        throw new RuntimeException(e);
+                    }
                 }
-            }
+                if (selectedThreadAdjust < currentThreadMax) {
+                    int diff = currentThreadMax - selectedThreadAdjust;
+                    ThreadAdjust.removeConsumers(diff);
+                }
+
 
 
         }, "AdjustThreadWatcher").start();

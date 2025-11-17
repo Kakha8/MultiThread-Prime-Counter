@@ -7,6 +7,8 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
 
+import java.util.HashMap;
+import java.util.Map;
 
 
 public class MainPageController {
@@ -74,17 +76,35 @@ public class MainPageController {
         stopBtn.setDisable(true);
     }
 
-    // Called by other threads
-    public void showMax(int primes, int total) {
-        Platform.runLater(() -> {
-            Label label = new Label(primes + " of " + total);
-            ProgressBar progressBar = new ProgressBar();
-            double percent = (double) primes / total;
-            progressBar.setProgress(percent);
+    private Map<Integer, HBox> consumerRows = new HashMap<>();
 
-            label.setStyle("-fx-font-size: 14px; -fx-text-fill: blue;");
-            mainVBox.getChildren().add(label);
-            mainVBox.getChildren().add(progressBar);
+    // Called by other threads
+    public void showMax(int threadId, int primes, int total) {
+        Platform.runLater(() -> {
+
+            double percent = (double) primes / total;
+
+            // check if this thread already has a row
+            HBox row = consumerRows.get(threadId);
+
+            if (row == null) {
+                // --- create UI row for this thread ---
+                Label label = new Label();
+                ProgressBar bar = new ProgressBar();
+                bar.setPrefWidth(300);
+
+                row = new HBox(10, label, bar);
+                consumerRows.put(threadId, row);
+
+                mainVBox.getChildren().add(row);
+            }
+
+            // --- update the row ---
+            Label label = (Label) row.getChildren().get(0);
+            ProgressBar bar = (ProgressBar) row.getChildren().get(1);
+
+            label.setText("Thread " + threadId + ": " + primes + " of " + total);
+            bar.setProgress(percent);
         });
     }
 
@@ -100,6 +120,15 @@ public class MainPageController {
             counterBox.getChildren().add(threadLabel);
         });
     }
+    public void removeThreadUI(int threadId) {
+        Platform.runLater(() -> {
+            HBox row = consumerRows.remove(threadId);
+            if (row != null) {
+                mainVBox.getChildren().remove(row);
+            }
+        });
+    }
+
 
     @FXML
     private void onStartThreads() throws InterruptedException {
@@ -143,7 +172,7 @@ public class MainPageController {
         Platform.runLater(() -> {
             //ConsumerThread.adjustThreads(selectedThreadAdjust);
             //ConsumerThread.addMoreConsumers(10);
-            ThreadAdjust.addThreads(10);
+            ConsumerThread.adjustThreads(selectedThreadAdjust);
         });
 
     }
