@@ -27,6 +27,8 @@ public class ThreadAdjust {
                 String identifier = t.getName().split("-")[1];
                 c.removeThreadUI(Integer.valueOf(identifier));
                 System.out.println(identifier + " removed");
+                int currentThreadCount = counter.decrementAndGet();
+                c.setCurrentThreadLabel(currentThreadCount);
 
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();

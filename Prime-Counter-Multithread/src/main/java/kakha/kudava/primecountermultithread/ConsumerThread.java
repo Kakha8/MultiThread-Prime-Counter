@@ -19,7 +19,8 @@ public class ConsumerThread {
     public static BlockingQueue<String> queue = new LinkedBlockingDeque<>(1000);
     public static List<Thread> consumers = new CopyOnWriteArrayList<>();
     private static List<Integer> primeCounts = new ArrayList<Integer>();
-    private static List<Boolean> threadCount = new ArrayList<Boolean>();
+    //private static List<Boolean> threadCount = new ArrayList<Boolean>();
+    public static AtomicInteger counter = new AtomicInteger(0);
     private static AtomicInteger threadId = new AtomicInteger(1);
     public static final String STOP = "STOP";
 
@@ -98,9 +99,12 @@ public class ConsumerThread {
                 int maxCount = getMaxPrimeCount(primeCounts);
                 int maxPrime = getMaxPrimeCount(primeNums);
 
+/*
                 synchronized (threadCount) {
                     threadCount.add(true);   // now: one entry per thread
                 }
+*/
+                int threadNum = counter.incrementAndGet();
 
                 System.out.println("max count: " + maxCount);
                 System.out.println("max prime: " + maxPrime);
@@ -108,8 +112,8 @@ public class ConsumerThread {
                 MainPageController c = MainPage.controller;
                 if (c != null) {
                     c.showMax(id, primeNums.size(), nums.size());
-                    c.counter(maxPrime, maxCount, threadCount.size());
-                    c.setCurrentThreadLabel(threadCount.size());
+                    c.counter(maxPrime, maxCount, threadNum);
+                    c.setCurrentThreadLabel(threadNum);
                 } else {
                     System.out.println("Controller not ready yet");
                 }
@@ -230,7 +234,9 @@ public class ConsumerThread {
         consumers.clear();
         // if you keep shared lists/counters, reset them here too
         // primeCounts.clear(); threadCount.clear(); etc.
-
+        counter.set(0);
+        MainPageController c = MainPage.controller;
+        c.setCurrentThreadLabel(counter.get());
         // 8) producer reference is no longer useful
         producer = null;
     }
