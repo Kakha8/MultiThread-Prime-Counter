@@ -35,6 +35,7 @@ public class PrimeProcessingManager {
     private static ThreadStopper threadStopper = new ThreadStopper(stopping, PAUSE_LOCK, paused,
             producer, consumers, queue, STOP, primeCounts, counter, threadId, maxConsumers);
 
+
     public static ThreadStopper getThreadStopper() {
         return threadStopper;
     }

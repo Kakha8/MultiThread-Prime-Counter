@@ -1,17 +1,18 @@
 package kakha.kudava.primecountermultithread.executions;
 
-import kakha.kudava.primecountermultithread.Counters;
+import kakha.kudava.primecountermultithread.services.Counters;
 import kakha.kudava.primecountermultithread.MainPage;
 import kakha.kudava.primecountermultithread.interactions.ThreadStopper;
 import kakha.kudava.primecountermultithread.controller.MainPageController;
+import kakha.kudava.primecountermultithread.services.PrimesResultWriter;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static kakha.kudava.primecountermultithread.FileNums.*;
-import static kakha.kudava.primecountermultithread.FileNums.getMaxPrimeCount;
+import static kakha.kudava.primecountermultithread.services.FileNums.*;
+import static kakha.kudava.primecountermultithread.services.FileNums.getMaxPrimeCount;
 
 public class ConsumerExecution implements Runnable {
 
@@ -23,6 +24,8 @@ public class ConsumerExecution implements Runnable {
     private AtomicInteger fileCounter;
     private List<Integer> primeCounts;
     private AtomicInteger counter;
+
+    private PrimesResultWriter writer = new PrimesResultWriter();
 
     public ConsumerExecution(ThreadStopper threadStopper, int id, String STOP, boolean stopping,
                              BlockingQueue<String> queue, AtomicInteger fileCounter,
@@ -98,8 +101,14 @@ public class ConsumerExecution implements Runnable {
             System.out.println("max prime: " + maxPrime);
 
             MainPageController c = MainPage.controller;
+
+            writer.writeResults("\nFilename: " + fileName);
+            writer.writeResults("Number of primes: " + maxCount +
+                    "\nMax prime: " + maxPrime);
+            writer.writeResults("Prime Numbers: " + primeNums);
+
             if (c != null) {
-                c.showMax(id, primeNums.size(), nums.size());
+                c.showMax(id, primeNums.size(), nums.size(), fileName);
                 c.counter(maxPrime, maxCount, threadNum);
                 c.setCurrentThreadLabel(threadNum);
                 c.setFilesLabel(filesProcessed);

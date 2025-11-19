@@ -7,6 +7,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import kakha.kudava.primecountermultithread.PrimeProcessingManager;
 import kakha.kudava.primecountermultithread.interactions.ThreadStopper;
+import kakha.kudava.primecountermultithread.services.PrimesResultWriter;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -46,6 +47,7 @@ public class MainPageController {
     private Label primeCountLabel;
 
     ThreadStopper threadStopper;
+    PrimesResultWriter primesResultWriter = new PrimesResultWriter();
 
     @FXML
     private void initialize() {
@@ -93,7 +95,7 @@ public class MainPageController {
     private Map<Integer, HBox> consumerRows = new HashMap<>();
 
     // Called by other threads
-    public void showMax(int threadId, int primes, int total) {
+    public void showMax(int threadId, int primes, int total, String fileName) {
         Platform.runLater(() -> {
 
             double percent = (double) primes / total;
@@ -117,7 +119,11 @@ public class MainPageController {
             Label label = (Label) row.getChildren().get(0);
             ProgressBar bar = (ProgressBar) row.getChildren().get(1);
 
-            label.setText("Thread " + threadId + ": " + primes + " of " + total);
+            label.setText(
+                    "Thread " + threadId +
+                            " | File: " + fileName +
+                            " | " + primes + " of " + total
+            );
             bar.setProgress(percent);
         });
     }
@@ -153,6 +159,8 @@ public class MainPageController {
         startBtn.setDisable(true);
         stopBtn.setDisable(false);
         pauseBtn.setVisible(true);
+
+        primesResultWriter.clearFile();
 
         int threadCount = Integer.parseInt(countTextField.getText());
         PrimeProcessingManager.producerConsumer(threadCount);
@@ -212,9 +220,5 @@ public class MainPageController {
 
     }
 
-    @FXML
-    private void onResume(){
-        threadStopper.resumeThreads();
-        System.out.println("resume() ran");
-    }
+
 }

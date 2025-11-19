@@ -21,7 +21,7 @@
       <Button fx:id="minusBtn" layoutX="139.0" layoutY="14.0" mnemonicParsing="false" onAction="#onMinus" prefHeight="25.0" prefWidth="25.0" text="-" />
       <Button layoutX="78.0" layoutY="50.0" mnemonicParsing="false" onAction="#onAdjust" prefHeight="25.0" prefWidth="58.0" text="ADJUST" />
       <Label fx:id="threadLabel" layoutX="272.0" layoutY="31.0" prefHeight="17.0" prefWidth="105.0" />
-      <Label fx:id="currentThreadLabel" layoutX="68.0" layoutY="86.0" text="Label" />
+      <Label fx:id="currentThreadLabel" layoutX="68.0" layoutY="86.0" />
       <VBox layoutX="178.0" layoutY="14.0" prefHeight="98.0" prefWidth="86.0">
          <children>
             <Button fx:id="startBtn" mnemonicParsing="false" onAction="#onStartThreads" prefHeight="25.0" prefWidth="70.0" text="START" />
@@ -29,7 +29,8 @@
             <Button fx:id="stopBtn" mnemonicParsing="false" onAction="#onStopThreads" prefHeight="25.0" prefWidth="70.0" text="STOP" />
          </children>
       </VBox>
-      <Label fx:id="filesProcessedLabel" layoutX="272.0" layoutY="18.0" prefHeight="17.0" prefWidth="105.0" text="Label" />
+      <Label fx:id="filesProcessedLabel" layoutX="272.0" layoutY="18.0" prefHeight="17.0" prefWidth="105.0" text="Files processed: 0" />
+      <Button layoutX="272.0" layoutY="40.0" mnemonicParsing="false" prefHeight="25.0" prefWidth="105.0" text="EXPORT DATA" />
     </children>
 
 </AnchorPane>

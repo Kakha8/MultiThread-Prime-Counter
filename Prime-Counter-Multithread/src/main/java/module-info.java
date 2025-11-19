@@ -13,4 +13,6 @@ module kakha.kudava.primecountermultithread {
     opens kakha.kudava.primecountermultithread.executions to javafx.fxml;
     exports kakha.kudava.primecountermultithread.interactions;
     opens kakha.kudava.primecountermultithread.interactions to javafx.fxml;
+    exports kakha.kudava.primecountermultithread.services;
+    opens kakha.kudava.primecountermultithread.services to javafx.fxml;
 }

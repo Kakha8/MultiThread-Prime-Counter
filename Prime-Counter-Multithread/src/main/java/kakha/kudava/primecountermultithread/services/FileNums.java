@@ -1,4 +1,4 @@
-package kakha.kudava.primecountermultithread;
+package kakha.kudava.primecountermultithread.services;
 
 import java.util.ArrayList;
 import java.util.List;
