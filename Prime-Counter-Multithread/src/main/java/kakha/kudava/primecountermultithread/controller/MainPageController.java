@@ -1,11 +1,12 @@
-package kakha.kudava.primecountermultithread;
+package kakha.kudava.primecountermultithread.controller;
 
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
+import kakha.kudava.primecountermultithread.PrimeProcessingManager;
+import kakha.kudava.primecountermultithread.interactions.ThreadStopper;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -40,7 +41,11 @@ public class MainPageController {
     @FXML
     private Button resumeBtn;
 
+    @FXML
+    private Label filesProcessedLabel;
     private Label primeCountLabel;
+
+    ThreadStopper threadStopper;
 
     @FXML
     private void initialize() {
@@ -51,6 +56,8 @@ public class MainPageController {
         stopBtn.setDisable(true);
         countTextField.setText("100");
         pauseBtn.setVisible(false);
+        threadStopper = PrimeProcessingManager.getThreadStopper();
+
 
         System.out.println("initialize() ran, primeCountLabel created.");
     }
@@ -59,6 +66,13 @@ public class MainPageController {
     public void setCurrentThreadLabel(int currentThread) {
         Platform.runLater(() -> {
             currentThreadLabel.setText(String.valueOf(currentThread));
+        });
+    }
+
+    @FXML
+    public void setFilesLabel(int fileCounter) {
+        Platform.runLater(() -> {
+            filesProcessedLabel.setText("Files processed: " + String.valueOf(fileCounter));
         });
     }
 
@@ -130,20 +144,23 @@ public class MainPageController {
     }
 
 
+
+
     @FXML
     private void onStartThreads() throws InterruptedException {
         mainVBox.getChildren().clear();
+        consumerRows.clear();
         startBtn.setDisable(true);
         stopBtn.setDisable(false);
         pauseBtn.setVisible(true);
 
         int threadCount = Integer.parseInt(countTextField.getText());
-        ConsumerThread.producerConsumer(threadCount);
+        PrimeProcessingManager.producerConsumer(threadCount);
     }
 
     @FXML
     private void onStopThreads() throws InterruptedException {
-        ConsumerThread.stopThreads();
+        PrimeProcessingManager.stopThreads();
         startBtn.setDisable(false);
         stopBtn.setDisable(true);
         pauseBtn.setVisible(false);
@@ -172,7 +189,11 @@ public class MainPageController {
         Platform.runLater(() -> {
             //ConsumerThread.adjustThreads(selectedThreadAdjust);
             //ConsumerThread.addMoreConsumers(10);
-            ConsumerThread.adjustThreads(selectedThreadAdjust);
+            try {
+                PrimeProcessingManager.adjustThreads(selectedThreadAdjust);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
         });
 
     }
@@ -180,11 +201,11 @@ public class MainPageController {
     @FXML
     private void onPause(){
         if (pauseBtn.getText().equals("PAUSE")) {
-            ConsumerThread.pauseThreads();
+            threadStopper.pauseThreads();
             System.out.println("pause() ran");
             pauseBtn.setText("RESUME");
         } else if (pauseBtn.getText().equals("RESUME")) {
-            ConsumerThread.resumeThreads();
+            threadStopper.resumeThreads();
             System.out.println("resume() ran");
             pauseBtn.setText("PAUSE");
         }
@@ -193,7 +214,7 @@ public class MainPageController {
 
     @FXML
     private void onResume(){
-        ConsumerThread.resumeThreads();
+        threadStopper.resumeThreads();
         System.out.println("resume() ran");
     }
 }
