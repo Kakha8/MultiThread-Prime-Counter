@@ -5,10 +5,13 @@ import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.stage.FileChooser;
+import javafx.stage.Window;
 import kakha.kudava.primecountermultithread.PrimeProcessingManager;
 import kakha.kudava.primecountermultithread.interactions.ThreadStopper;
 import kakha.kudava.primecountermultithread.services.PrimesResultWriter;
 
+import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -44,6 +47,9 @@ public class MainPageController {
 
     @FXML
     private Label filesProcessedLabel;
+
+    @FXML
+    private Button exportBtn;
     private Label primeCountLabel;
 
     ThreadStopper threadStopper;
@@ -218,6 +224,26 @@ public class MainPageController {
             pauseBtn.setText("PAUSE");
         }
 
+    }
+
+    @FXML
+    private void onExport(){
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Save Primes Result");
+        fileChooser.setInitialFileName("primes-result.txt");
+        fileChooser.getExtensionFilters().add(
+                new FileChooser.ExtensionFilter("Text Files (*.txt)", "*.txt")
+        );
+
+        Window window = exportBtn.getScene().getWindow();
+        File file = fileChooser.showSaveDialog(window);
+        String destination = file.getAbsolutePath();
+        String source = "result\\primes-result.txt";
+
+        if (file != null) {
+            primesResultWriter.saveFile("result\\primes-results.txt",destination);
+            System.out.println("Saved results to: " + destination);
+        }
     }
 
 

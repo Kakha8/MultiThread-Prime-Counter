@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
 
 import static java.awt.SystemColor.text;
@@ -45,6 +46,16 @@ public class PrimesResultWriter {
         } catch (IOException e) {
             e.printStackTrace();
             return null;
+        }
+    }
+
+    public void saveFile(String source, String destination) {
+        try {
+            File sourceFile = new File(source);
+            File destinationFile = new File(destination);
+            Files.copy(sourceFile.toPath(), destinationFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 }
