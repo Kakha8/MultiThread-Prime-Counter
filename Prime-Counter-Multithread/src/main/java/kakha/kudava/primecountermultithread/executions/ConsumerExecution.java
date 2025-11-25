@@ -26,11 +26,15 @@ public class ConsumerExecution implements Runnable {
     private AtomicInteger counter;
 
     private PrimesResultWriter writer = new PrimesResultWriter();
-    private AtomicInteger primeCountLocacl = new AtomicInteger(0);
 
+    private AtomicInteger maxConsumers;
+    private AtomicInteger globalMaxPrime;
+    private AtomicInteger globalMinPrime;
+    private AtomicInteger activeConsumers;
     public ConsumerExecution(ThreadStopper threadStopper, int id, String STOP, boolean stopping,
                              BlockingQueue<String> queue, AtomicInteger fileCounter,
-                             List<Integer> primeCounts, AtomicInteger counter) {
+                             List<Integer> primeCounts, AtomicInteger counter, AtomicInteger maxConsumers,
+                             AtomicInteger globalMaxPrime, AtomicInteger globalMinPrime, AtomicInteger activeConsumers) {
         this.threadStopper = threadStopper;
         this.id = id;
         this.STOP = STOP;
@@ -39,7 +43,10 @@ public class ConsumerExecution implements Runnable {
         this.fileCounter = fileCounter;
         this.primeCounts = primeCounts;
         this.counter = counter;
-
+        this.maxConsumers = maxConsumers;
+        this.globalMaxPrime = globalMaxPrime;
+        this.globalMinPrime = globalMinPrime;
+        this.activeConsumers = activeConsumers;
     }
 /*    public void startConsumerExec() {
 
@@ -60,17 +67,14 @@ public class ConsumerExecution implements Runnable {
                 threadStopper.waitIfPaused();
                 if (stopping) return;   // just in case someone called stop
 
-                // ----- ONE file per thread -----
                 // block until we get one item
                 String item = queue.take();   // no loop, no poll()
 
-                // if you still sometimes put STOP into the queue, just ignore it
                 if (STOP.equals(item)) {
                     System.out.println(Thread.currentThread().getName() + " got STOP, exiting.");
                     return;
                 }
 
-                // process THIS file only
                 List<Integer> nums = getNums(item);
                 for (Integer num : nums) {
                     if (isPrime(num)) primeNums.add(num);
@@ -90,12 +94,12 @@ public class ConsumerExecution implements Runnable {
 
                 int maxCount = getMaxPrimeCount(primeCounts);
                 int maxPrime = getMaxPrimeCount(primeNums);
+                int minPrime = getMinPrimeCount(primeNums);
+                if (maxPrime > globalMaxPrime.get())
+                    globalMaxPrime.set(maxPrime);
+                if (minPrime < globalMinPrime.get())
+                    globalMinPrime.set(minPrime);
 
-/*
-                synchronized (threadCount) {
-                    threadCount.add(true);   // now: one entry per thread
-                }
-*/
                 int threadNum = counter.incrementAndGet();
                 counters.incrementFileCounter();
                 int filesProcessed = counters.getFileCounter();
@@ -113,17 +117,28 @@ public class ConsumerExecution implements Runnable {
 
                 if (c != null) {
                     c.showMax(id, primeNums.size(), nums.size(), fileName);
-                    c.counter(maxPrime, maxCount, threadNum);
-                    c.setCurrentThreadLabel(threadNum);
+                    c.counter(globalMaxPrime.get(), globalMinPrime.get(),
+                            maxCount, maxConsumers.get());
+                    // ❌ REMOVE this line:
+                    // c.setCurrentThreadLabel(resultIndex);
+
                     c.setFilesLabel(filesProcessed);
                 } else {
                     System.out.println("Controller not ready yet");
                 }
 
             }
-            // thread ends here — no while loop, no extra files
+
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
+        } finally {
+            // consumer is exiting for real
+            activeConsumers.decrementAndGet();
+            MainPageController c = MainPage.controller;
+            if (c != null) {
+                c.setCurrentThreadLabel(activeConsumers.get());
+                c.removeThreadUI(id);
+            }
         }
     }
 }

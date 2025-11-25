@@ -13,8 +13,9 @@ public class ThreadAdjust {
 
         for (int i = 0; i < threadNum; i++) {
             PrimeProcessingManager.startConsumerThread();
-            maxConsumers.addAndGet(1);
-            Thread.sleep(100);
+            maxConsumers.incrementAndGet();
+            activeConsumers.incrementAndGet();
+            Thread.sleep(5);
         }
 
     }
@@ -23,16 +24,21 @@ public class ThreadAdjust {
         for (int i = 0; i < count && !consumers.isEmpty(); i++) {
             MainPageController c = MainPage.controller;
             try {
-                Thread t = consumers.get(i);
+                Thread t = consumers.get(consumers.size() - 1); // or any index you like
+                consumers.remove(t);
 
-                queue.put(STOP);   // retire one consumer
+                maxConsumers.decrementAndGet();
+
+                queue.put(STOP);
                 System.out.println("Retiring thread " + t.getName());
 
                 String identifier = t.getName().split("-")[1];
-                c.removeThreadUI(Integer.valueOf(identifier));
+                if (c != null) {
+                    c.removeThreadUI(Integer.valueOf(identifier));
+                }
                 System.out.println(identifier + " removed");
-                int currentThreadCount = counter.decrementAndGet();
-                c.setCurrentThreadLabel(currentThreadCount);
+
+
 
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
@@ -43,22 +49,21 @@ public class ThreadAdjust {
     public void adjustThreadsExecution(int selectedThreadAdjust, AtomicInteger maxConsumers, MainPageController c) throws InterruptedException {
         new Thread(() -> {
 
-            int currentThread = c.getCurrentThread();
-            int currentThreadMax = maxConsumers.get();
-            if(selectedThreadAdjust > currentThreadMax) {
-                int diff = selectedThreadAdjust - currentThreadMax;
+            int current = consumers.size();  // TRUE active count, maintained by startConsumerThread + ConsumerExecution.finally
+
+            if (selectedThreadAdjust > current) {
+                int diff = selectedThreadAdjust - current;
                 try {
-                    System.out.println(diff);
                     addThreads(diff, maxConsumers);
                 } catch (InterruptedException e) {
-                    throw new RuntimeException(e);
+                    Thread.currentThread().interrupt();
                 }
-            }
-            if (selectedThreadAdjust < currentThreadMax) {
-                int diff = currentThreadMax - selectedThreadAdjust;
-                removeConsumers(diff);
-            }
+            } else if (selectedThreadAdjust < current) {
+                int diff = current - selectedThreadAdjust;
 
+                removeConsumers(diff);
+
+            }
 
 
         }, "AdjustThreadWatcher").start();

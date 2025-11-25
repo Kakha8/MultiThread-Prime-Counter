@@ -29,11 +29,16 @@ public class PrimeProcessingManager {
     private static volatile boolean paused = false;
     private static boolean stopping = false;
     public static AtomicInteger fileCounter = new AtomicInteger(0);
+    public static AtomicInteger globalMaxPrime = new AtomicInteger(0);
+    public static AtomicInteger globalMaxCount = new AtomicInteger(0);
+    public static AtomicInteger globalMinPrime = new AtomicInteger(1000);
+
+    public static AtomicInteger activeConsumers = new AtomicInteger(0);
 
     private static Thread producer;
 
     private static ThreadStopper threadStopper = new ThreadStopper(stopping, PAUSE_LOCK, paused,
-            producer, consumers, queue, STOP, primeCounts, counter, threadId, maxConsumers);
+            producer, consumers, queue, STOP, primeCounts, counter, threadId, maxConsumers, fileCounter);
 
 
     public static ThreadStopper getThreadStopper() {
@@ -42,14 +47,22 @@ public class PrimeProcessingManager {
     public static void startConsumerThread() {
 
         int id = threadId.getAndIncrement();
-        ConsumerExecution execution = new ConsumerExecution(threadStopper, id, STOP, stopping,
-                queue, fileCounter, primeCounts, counter);
-        Thread consumer = new Thread(() -> {
-            execution.run();
-        });
+        ConsumerExecution execution = new ConsumerExecution(
+                threadStopper, id, STOP, stopping,
+                queue, fileCounter, primeCounts, counter,
+                maxConsumers, globalMaxPrime, globalMinPrime, activeConsumers
+        );
+        Thread consumer = new Thread(execution, "Consumer-" + id);
 
-        consumer.start();
         consumers.add(consumer);
+        consumer.start();
+
+        // NEW: track active consumers here
+        int now = activeConsumers.incrementAndGet();
+        MainPageController c = MainPage.controller;
+        if (c != null) {
+            c.setCurrentThreadLabel(now);
+        }
     }
 
 
@@ -75,6 +88,8 @@ public class PrimeProcessingManager {
     public static void stopThreads() throws InterruptedException {
         System.out.println("Stopping threads...");
         threadStopper.stopThreadsExec();
+        globalMaxPrime.set(0);
+        globalMinPrime.set(0);
 
     }
 

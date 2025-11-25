@@ -50,6 +50,9 @@ public class MainPageController {
 
     @FXML
     private Button exportBtn;
+
+    @FXML
+    private ProgressBar filesProgressBar;
     private Label primeCountLabel;
 
     ThreadStopper threadStopper;
@@ -62,6 +65,7 @@ public class MainPageController {
         primeCountLabel.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: green;");
 
         stopBtn.setDisable(true);
+        exportBtn.setVisible(false);
         countTextField.setText("100");
         pauseBtn.setVisible(false);
         threadStopper = PrimeProcessingManager.getThreadStopper();
@@ -81,6 +85,9 @@ public class MainPageController {
     public void setFilesLabel(int fileCounter) {
         Platform.runLater(() -> {
             filesProcessedLabel.setText("Files processed: " + String.valueOf(fileCounter));
+            double percentage = (double) fileCounter / 1000;
+            filesProgressBar.setProgress(percentage);
+
         });
     }
 
@@ -134,15 +141,17 @@ public class MainPageController {
         });
     }
 
-    public void counter(int maxPrime, int maxPrimeCount, int thread) {
+    public void counter(int maxPrime, int minPrime, int maxPrimeCount, int thread) {
         Platform.runLater(() -> {
             Label maxPrimeLabel = new Label("Max prime: " + maxPrime);
+            Label minPrimeLabel = new Label("Min prime: " + minPrime);
             Label threadLabel = new Label("Thread: " + thread);
             Label maxPrimeCountLabel = new Label("Max count: " + maxPrimeCount);
 
             counterBox.getChildren().clear();
             counterBox.getChildren().add(maxPrimeCountLabel);
             counterBox.getChildren().add(maxPrimeLabel);
+            counterBox.getChildren().add(minPrimeLabel);
             counterBox.getChildren().add(threadLabel);
         });
     }
@@ -166,6 +175,7 @@ public class MainPageController {
         stopBtn.setDisable(false);
         pauseBtn.setVisible(true);
 
+
         primesResultWriter.clearFile();
 
         int threadCount = Integer.parseInt(countTextField.getText());
@@ -178,6 +188,7 @@ public class MainPageController {
         startBtn.setDisable(false);
         stopBtn.setDisable(true);
         pauseBtn.setVisible(false);
+        exportBtn.setVisible(true);
     }
 
     @FXML

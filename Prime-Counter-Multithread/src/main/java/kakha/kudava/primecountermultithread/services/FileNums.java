@@ -45,4 +45,11 @@ public class FileNums {
         return Collections.max(primes);
 
     }
+
+    static public int getMinPrimeCount(List<Integer> primes) {
+
+        if (primes == null || primes.isEmpty()) return 0; // avoid NoSuchElementException
+        return Collections.min(primes);
+
+    }
 }

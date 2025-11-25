@@ -21,11 +21,12 @@ public class ThreadStopper {
     private AtomicInteger counter;
     private AtomicInteger threadId;
     private AtomicInteger maxConsumers;
+    private AtomicInteger fileCounter;
 
     public ThreadStopper(boolean stopping, Object pauseLock, boolean paused, Thread producer,
                          List<Thread> consumers, BlockingQueue<String> queue, String STOP,
                          List<Integer> primeCounts, AtomicInteger counter, AtomicInteger threadId,
-                         AtomicInteger maxConsumers) {
+                         AtomicInteger maxConsumers, AtomicInteger fileCounter) {
         this.paused = paused;
         this.producer = producer;
         this.consumers = consumers;
@@ -37,6 +38,7 @@ public class ThreadStopper {
         this.maxConsumers = maxConsumers;
         this.stopping = stopping;
         this.PAUSE_LOCK = pauseLock;
+        this.fileCounter = fileCounter;
 
     }
 
@@ -117,6 +119,7 @@ public class ThreadStopper {
         }
 
         System.out.println("All threads stopped, state reset.");
+        fileCounter.set(0);
     }
 
     public void pauseThreads() {
