@@ -26,6 +26,7 @@ public class ConsumerExecution implements Runnable {
     private AtomicInteger counter;
 
     private PrimesResultWriter writer = new PrimesResultWriter();
+    private AtomicInteger primeCountLocacl = new AtomicInteger(0);
 
     public ConsumerExecution(ThreadStopper threadStopper, int id, String STOP, boolean stopping,
                              BlockingQueue<String> queue, AtomicInteger fileCounter,
@@ -47,75 +48,79 @@ public class ConsumerExecution implements Runnable {
     @Override
     public void run() {
         Thread.currentThread().setName("Consumer-" + id);
-        List<Integer> primeNums = new ArrayList<>();
 
         try {
-            // respect pause before doing any work
-            if (threadStopper.isPaused()) {
-                System.out.println(Thread.currentThread().getName() + " waiting (paused)...");
-            }
-            threadStopper.waitIfPaused();
-            if (stopping) return;   // just in case someone called stop
+            while (true) {
+                List<Integer> primeNums = new ArrayList<>();
 
-            // ----- ONE file per thread -----
-            // block until we get one item
-            String item = queue.take();   // no loop, no poll()
+                // respect pause before doing any work
+                if (threadStopper.isPaused()) {
+                    System.out.println(Thread.currentThread().getName() + " waiting (paused)...");
+                }
+                threadStopper.waitIfPaused();
+                if (stopping) return;   // just in case someone called stop
 
-            // if you still sometimes put STOP into the queue, just ignore it
-            if (STOP.equals(item)) {
-                System.out.println(Thread.currentThread().getName() + " got STOP, exiting.");
-                return;
-            }
+                // ----- ONE file per thread -----
+                // block until we get one item
+                String item = queue.take();   // no loop, no poll()
 
-            // process THIS file only
-            List<Integer> nums = getNums(item);
-            for (Integer num : nums) {
-                if (isPrime(num)) primeNums.add(num);
-            }
+                // if you still sometimes put STOP into the queue, just ignore it
+                if (STOP.equals(item)) {
+                    System.out.println(Thread.currentThread().getName() + " got STOP, exiting.");
+                    return;
+                }
 
-            System.out.println(Thread.currentThread().getName() + " processed file");
+                // process THIS file only
+                List<Integer> nums = getNums(item);
+                for (Integer num : nums) {
+                    if (isPrime(num)) primeNums.add(num);
+                }
 
-            Counters counters = new Counters(item, fileCounter);
-            String fileName = counters.getFileName();
-            System.out.println("file: " + fileName);
-            System.out.println("Consuming " + primeNums);
-            System.out.println(primeNums.size() + " of " + nums.size());
+                System.out.println(Thread.currentThread().getName() + " processed file");
 
-            synchronized (primeCounts) {
-                primeCounts.add(primeNums.size());
-            }
+                Counters counters = new Counters(item, fileCounter);
+                String fileName = counters.getFileName();
+                System.out.println("file: " + fileName);
+                System.out.println("Consuming " + primeNums);
+                System.out.println(primeNums.size() + " of " + nums.size());
 
-            int maxCount = getMaxPrimeCount(primeCounts);
-            int maxPrime = getMaxPrimeCount(primeNums);
+                synchronized (primeCounts) {
+                    primeCounts.add(primeNums.size());
+                }
+
+                int maxCount = getMaxPrimeCount(primeCounts);
+                int maxPrime = getMaxPrimeCount(primeNums);
 
 /*
                 synchronized (threadCount) {
                     threadCount.add(true);   // now: one entry per thread
                 }
 */
-            int threadNum = counter.incrementAndGet();
-            counters.incrementFileCounter();
-            int filesProcessed = counters.getFileCounter();
+                int threadNum = counter.incrementAndGet();
+                counters.incrementFileCounter();
+                int filesProcessed = counters.getFileCounter();
 
-            System.out.println("max count: " + maxCount);
-            System.out.println("max prime: " + maxPrime);
+                System.out.println("max count: " + maxCount);
+                System.out.println("max prime: " + maxPrime);
 
-            MainPageController c = MainPage.controller;
+                MainPageController c = MainPage.controller;
 
-            writer.writeResults("\nFilename: " + fileName);
-            writer.writeResults("Number of primes: " + maxCount +
-                    "\nMax prime: " + maxPrime);
-            writer.writeResults("Prime Numbers: " + primeNums);
+                writer.writeResults("\nThread"+id);
+                writer.writeResults("Filename: " + fileName);
+                writer.writeResults("Number of primes: " + maxCount +
+                        "\nMax prime: " + maxPrime);
+                writer.writeResults("Prime Numbers: " + primeNums);
 
-            if (c != null) {
-                c.showMax(id, primeNums.size(), nums.size(), fileName);
-                c.counter(maxPrime, maxCount, threadNum);
-                c.setCurrentThreadLabel(threadNum);
-                c.setFilesLabel(filesProcessed);
-            } else {
-                System.out.println("Controller not ready yet");
+                if (c != null) {
+                    c.showMax(id, primeNums.size(), nums.size(), fileName);
+                    c.counter(maxPrime, maxCount, threadNum);
+                    c.setCurrentThreadLabel(threadNum);
+                    c.setFilesLabel(filesProcessed);
+                } else {
+                    System.out.println("Controller not ready yet");
+                }
+
             }
-
             // thread ends here — no while loop, no extra files
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
