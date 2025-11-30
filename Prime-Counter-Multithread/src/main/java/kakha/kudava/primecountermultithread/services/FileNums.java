@@ -19,7 +19,7 @@ public class FileNums {
         String[] lines = numbers.split("\\R");  // split into lines
         List<Integer> nums = new ArrayList<>();
 
-        // Start from line index 1 → skip the first line
+        // Start from line index 1, skip the first line
         for (int i = 1; i < lines.length; i++) {
             String line = lines[i];
             String[] splitNums = line.trim().split("\\s+");

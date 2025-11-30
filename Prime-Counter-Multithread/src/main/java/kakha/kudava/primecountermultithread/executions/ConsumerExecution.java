@@ -65,10 +65,10 @@ public class ConsumerExecution implements Runnable {
                     System.out.println(Thread.currentThread().getName() + " waiting (paused)...");
                 }
                 threadStopper.waitIfPaused();
-                if (stopping) return;   // just in case someone called stop
+                if (stopping) return;
 
-                // block until we get one item
-                String item = queue.take();   // no loop, no poll()
+
+                String item = queue.take();
 
                 if (STOP.equals(item)) {
                     System.out.println(Thread.currentThread().getName() + " got STOP, exiting.");
@@ -119,8 +119,6 @@ public class ConsumerExecution implements Runnable {
                     c.showMax(id, primeNums.size(), nums.size(), fileName);
                     c.counter(globalMaxPrime.get(), globalMinPrime.get(),
                             maxCount, maxConsumers.get());
-                    // ❌ REMOVE this line:
-                    // c.setCurrentThreadLabel(resultIndex);
 
                     c.setFilesLabel(filesProcessed);
                 } else {
@@ -132,11 +130,9 @@ public class ConsumerExecution implements Runnable {
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         } finally {
-            // consumer is exiting for real
             activeConsumers.decrementAndGet();
             MainPageController c = MainPage.controller;
             if (c != null) {
-                c.setCurrentThreadLabel(activeConsumers.get());
                 c.removeThreadUI(id);
             }
         }

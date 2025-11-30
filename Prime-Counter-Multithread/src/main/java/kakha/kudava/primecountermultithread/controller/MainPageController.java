@@ -37,9 +37,6 @@ public class MainPageController {
     private TextField countTextField;
 
     @FXML
-    private Label currentThreadLabel;
-
-    @FXML
     private Button pauseBtn;
 
     @FXML
@@ -74,12 +71,7 @@ public class MainPageController {
         System.out.println("initialize() ran, primeCountLabel created.");
     }
 
-    @FXML
-    public void setCurrentThreadLabel(int currentThread) {
-        Platform.runLater(() -> {
-            currentThreadLabel.setText(String.valueOf(currentThread));
-        });
-    }
+
 
     @FXML
     public void setFilesLabel(int fileCounter) {
@@ -88,12 +80,10 @@ public class MainPageController {
             double percentage = (double) fileCounter / 1000;
             filesProgressBar.setProgress(percentage);
 
-        });
-    }
+            if (fileCounter >= 1000)
+                exportBtn.setVisible(true);
 
-    @FXML
-    public int getCurrentThread() {
-        return Integer.parseInt(currentThreadLabel.getText());
+        });
     }
 
     @FXML
@@ -107,7 +97,6 @@ public class MainPageController {
 
     private Map<Integer, HBox> consumerRows = new HashMap<>();
 
-    // Called by other threads
     public void showMax(int threadId, int primes, int total, String fileName) {
         Platform.runLater(() -> {
 
@@ -145,7 +134,7 @@ public class MainPageController {
         Platform.runLater(() -> {
             Label maxPrimeLabel = new Label("Max prime: " + maxPrime);
             Label minPrimeLabel = new Label("Min prime: " + minPrime);
-            Label threadLabel = new Label("Thread: " + thread);
+            Label threadLabel = new Label("Threads: " + thread);
             Label maxPrimeCountLabel = new Label("Max count: " + maxPrimeCount);
 
             counterBox.getChildren().clear();
@@ -208,7 +197,6 @@ public class MainPageController {
     @FXML
     private void onAdjust(){
         int threadAdjust = Integer.parseInt(countTextField.getText());
-        int currentThread = Integer.parseInt(currentThreadLabel.getText());
         int selectedThreadAdjust = Integer.parseInt(countTextField.getText());
 
         Platform.runLater(() -> {

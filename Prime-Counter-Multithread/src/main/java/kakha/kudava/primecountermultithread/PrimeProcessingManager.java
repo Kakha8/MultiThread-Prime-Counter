@@ -57,12 +57,9 @@ public class PrimeProcessingManager {
         consumers.add(consumer);
         consumer.start();
 
-        // NEW: track active consumers here
         int now = activeConsumers.incrementAndGet();
         MainPageController c = MainPage.controller;
-        if (c != null) {
-            c.setCurrentThreadLabel(now);
-        }
+
     }
 
 

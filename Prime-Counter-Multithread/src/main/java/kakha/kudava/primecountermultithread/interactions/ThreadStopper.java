@@ -46,7 +46,7 @@ public class ThreadStopper {
         this.producer = producer;
     }
     public void stopThreadsExec() throws InterruptedException {
-        // tell everyone we're stopping
+
         stopping = true;
 
         // if paused, wake everyone so they can see 'stopping'
@@ -59,14 +59,13 @@ public class ThreadStopper {
         if (producer != null) {
             producer.interrupt();
             try {
-                producer.join(1000); // wait up to 1s
+                producer.join(1000);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
             }
             producer = null;
         }
 
-        // snapshot current consumers (so list won't change under us)
         List<Thread> snapshot = new ArrayList<>(consumers);
 
         // count how many are still alive
@@ -112,11 +111,6 @@ public class ThreadStopper {
         maxConsumers.set(0);
 
         MainPageController c = MainPage.controller;
-        if (c != null) {
-            c.setCurrentThreadLabel(0);
-            // you can also clear UI rows here if you want:
-            // Platform.runLater(() -> c.clearAllThreadUI());
-        }
 
         System.out.println("All threads stopped, state reset.");
         fileCounter.set(0);
